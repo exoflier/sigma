@@ -15,7 +15,7 @@ import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 
 @Config
 @Autonomous(group = "drive")
-public class Auto1Husky extends LinearOpMode {
+public class Auto1RedSide extends LinearOpMode {
     public static double DISTANCE = 24; // in
 
     public Slide slide;
@@ -84,19 +84,19 @@ public class Auto1Husky extends LinearOpMode {
                 .lineToSplineHeading(new Pose2d(16, 0, Math.toRadians(0)))
                 .build();
         Trajectory lineTo3 = drive.trajectoryBuilder(startPose)
-                .lineToSplineHeading(new Pose2d(-4, -17, Math.toRadians(0)))
+                .lineToSplineHeading(new Pose2d(4, 17, Math.toRadians(0)))
                 .build();
         Trajectory lineTo6 = drive.trajectoryBuilder(startPose)
-                .lineToSplineHeading(new Pose2d(-16, 0, Math.toRadians(0)))
+                .lineToSplineHeading(new Pose2d(16, 0, Math.toRadians(0)))
                 .build();
         Trajectory lineTo7 = drive.trajectoryBuilder(startPose)
-                .lineToSplineHeading(new Pose2d(0, -15, Math.toRadians(0)))
+                .lineToSplineHeading(new Pose2d(0, 15, Math.toRadians(0)))
                 .build();
         Trajectory lineTo4 = drive.trajectoryBuilder(startPose)
-                .lineToSplineHeading(new Pose2d(0, 16, Math.toRadians(0)))
+                .lineToSplineHeading(new Pose2d(0, -16, Math.toRadians(0)))
                 .build();
         Trajectory lineTo5 = drive.trajectoryBuilder(startPose)
-                .lineToSplineHeading(new Pose2d(19, 0, Math.toRadians(0)))
+                .lineToSplineHeading(new Pose2d(-19, 0, Math.toRadians(0)))
                 .build();
         Trajectory backward17 = drive.trajectoryBuilder(startPose)
                 .back(12)
@@ -143,6 +143,7 @@ public class Auto1Husky extends LinearOpMode {
         }
 
         drive.followTrajectory(thosewhogrimace);
+
         drive.turn(0.5);
         sleep(400);
         claw.moveForwardMAX();
@@ -150,9 +151,11 @@ public class Auto1Husky extends LinearOpMode {
         drive.turn(-0.5);
         panningMotor.rotateForward(0.8, 300);
         slide.MoveToLevelAsync(Slide.level.slide_highbucket);
+
         drive.followTrajectory(backward);
         drive.followTrajectory(lineTo3);
         drive.followTrajectory(backward2);
+
         //following is the BASE DEPOSIT CODE
         orientation.moveForwardMAX();
         panningServo.moveBackwardMIN();
@@ -162,7 +165,9 @@ public class Auto1Husky extends LinearOpMode {
         panningServo.moveForwardMAX();
         sleep(500);
         slide.MoveToLevelAsync(Slide.level.zero);
+
         drive.followTrajectory(lineTo4);
+
         panningMotor.rotateForward(-1.0, 300);
         frontLens.updateObservedObjects();
         firstBlock = frontLens.getFirstObject();
@@ -171,7 +176,9 @@ public class Auto1Husky extends LinearOpMode {
             xMovement = scale2 * ((xDifference * firstBlock.width) / (firstBlock.width + xDifference));
             drive.turn(xMovement);
         }
+
         drive.followTrajectory(lineTo5);
+
         drive.turn(0.5);
         claw.moveForwardMAX();
         sleep(500);
