@@ -8,14 +8,14 @@ import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.qualcomm.hardware.dfrobot.HuskyLens;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
-import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequence;
 
 @Config
 @Autonomous(group = "drive")
-public class Auto1 extends LinearOpMode {
+public class Auto1Husky extends LinearOpMode {
     public static double DISTANCE = 24; // in
 
     public Slide slide;
@@ -25,7 +25,17 @@ public class Auto1 extends LinearOpMode {
     public Servos orientation;
     public Motors pulley;
     public HuskyLenses frontLens;
+    public DcMotor fl;
+    public DcMotor bl;
+    public DcMotor fr;
+    public DcMotor br;
 
+    public HuskyLens.Block firstBlock;
+    int xCenter = 210;
+    int xDifference = 0;
+    double xMovement;
+    double scale1 = 0.06;
+    double scale2 = 0.041;
 
     public int runFrames;
 
@@ -42,6 +52,10 @@ public class Auto1 extends LinearOpMode {
         pulley = new Motors(hardwareMap, "pulley");
         frontLens = new HuskyLenses(hardwareMap, "frontlens", "color");
 
+        fl = hardwareMap.get(DcMotor.class, "fl");
+        fr = hardwareMap.get(DcMotor.class, "fr");
+        bl = hardwareMap.get(DcMotor.class, "bl");
+        br = hardwareMap.get(DcMotor.class, "br");
 
         runFrames = 0;
         claw.moveForwardMAX();
@@ -54,8 +68,8 @@ public class Auto1 extends LinearOpMode {
 
         drive.setPoseEstimate(startPose);
 
-        Trajectory lineTo1 = drive.trajectoryBuilder(startPose)
-                .lineToSplineHeading(new Pose2d(0, 24.3, Math.toRadians(0)))
+        Trajectory firstturn = drive.trajectoryBuilder(startPose)
+                .lineToSplineHeading(new Pose2d(10, 25.4, Math.toRadians(0)))
                 .build();
         Trajectory backward = drive.trajectoryBuilder(startPose)
                 .back(10.5)
@@ -64,7 +78,7 @@ public class Auto1 extends LinearOpMode {
                 .back(4.5)
                 .build();
         Trajectory backward2 = drive.trajectoryBuilder(startPose)
-                .back(9)
+                .back(12.5)
                 .build();
         Trajectory lineTo2 = drive.trajectoryBuilder(startPose)
                 .lineToSplineHeading(new Pose2d(16, 0, Math.toRadians(0)))
@@ -85,10 +99,13 @@ public class Auto1 extends LinearOpMode {
                 .lineToSplineHeading(new Pose2d(19, 0, Math.toRadians(0)))
                 .build();
         Trajectory backward17 = drive.trajectoryBuilder(startPose)
-                .back(8)
+                .back(12)
                 .build();
         Trajectory forward = drive.trajectoryBuilder(startPose)
                 .forward(36)
+                .build();
+        Trajectory thosewhogrimace = drive.trajectoryBuilder(startPose)
+                .forward(24.3)
                 .build();
 
 
@@ -102,6 +119,7 @@ public class Auto1 extends LinearOpMode {
         slide.MoveToLevelAsync(Slide.level.slide_highbucket);
         //remove from base deposit code
         drive.followTrajectory(backward);
+        sleep(500);
         panningServo.moveBackwardMIN();
         sleep(500);
         claw.moveBackwardMIN();
@@ -109,18 +127,27 @@ public class Auto1 extends LinearOpMode {
         panningServo.moveForwardMAX();
         sleep(500);
         // I MADE THIS ASYNC
-        slide.MoveToLevel(Slide.level.zero);
-        //remove from base deposit code
-        drive.turn(2.5);
+        slide.MoveToLevelAsync(Slide.level.zero);
+        drive.followTrajectory(firstturn);
         panningMotor.rotateForward(-1.0, 300);
-        drive.followTrajectory(backward1);
-        drive.followTrajectory(lineTo1);
-        drive.followTrajectory(lineTo2);
-        drive.turn(0.7);
-        sleep(700);
+        sleep(500);
+
+        // First turn
+        frontLens.updateObservedObjects();
+        firstBlock = frontLens.getFirstObject();
+        if (firstBlock != null) {
+            xDifference = Math.abs(xCenter - firstBlock.x);
+            xMovement = scale1 * ((xDifference * firstBlock.width) / (firstBlock.width + xDifference));
+            drive.turn(xMovement);
+            //strafeLeft(firstBlock.x  * 2);
+        }
+
+        drive.followTrajectory(thosewhogrimace);
+        drive.turn(0.5);
+        sleep(400);
         claw.moveForwardMAX();
         sleep(700);
-        drive.turn(-0.7);
+        drive.turn(-0.5);
         panningMotor.rotateForward(0.8, 300);
         slide.MoveToLevelAsync(Slide.level.slide_highbucket);
         drive.followTrajectory(backward);
@@ -137,10 +164,18 @@ public class Auto1 extends LinearOpMode {
         slide.MoveToLevelAsync(Slide.level.zero);
         drive.followTrajectory(lineTo4);
         panningMotor.rotateForward(-1.0, 300);
+        frontLens.updateObservedObjects();
+        firstBlock = frontLens.getFirstObject();
+        if (firstBlock != null) {
+            xDifference = Math.abs(xCenter - firstBlock.x);
+            xMovement = scale2 * ((xDifference * firstBlock.width) / (firstBlock.width + xDifference));
+            drive.turn(xMovement);
+        }
         drive.followTrajectory(lineTo5);
-        drive.turn(1.2);
+        drive.turn(0.5);
         claw.moveForwardMAX();
         sleep(500);
+        drive.turn(-0.5);
         panningMotor.rotateForward(0.8, 300);
         slide.MoveToLevelAsync(Slide.level.slide_highbucket);
         drive.turn(-1.35);
@@ -151,11 +186,39 @@ public class Auto1 extends LinearOpMode {
         sleep(500);
         claw.moveBackwardMIN();
         sleep(500);
-        panningServo.moveForwardMAX();
-        sleep(500);
+        moveForwardSlightLeft(1000);
         slide.MoveToLevelAsync(Slide.level.zero);
-        drive.followTrajectory(forward);
-        panningMotor.rotateForward(-1.0, 300);
+        moveForwardSlightLeft(1000);
+//        drive.followTrajectory(forward);
+
     }
 
-}
+    public void strafeLeft(int timeMs) {
+        fl.setPower(-1.0); // backward
+        fr.setPower(1.0); // forward
+        bl.setPower(-1.0); // forward
+        br.setPower(1.0); // backward
+        if (timeMs > 0) {
+            sleep(timeMs);
+            stopMovement();
+        }
+    }
+
+    public void moveForwardSlightLeft(int timeMs) {
+        fl.setPower(0); // forward
+        fr.setPower(1.0); // forward
+        bl.setPower(0); // forward
+        br.setPower(1.0); // forward
+        if (timeMs > 0) {
+            sleep(timeMs);
+            stopMovement();
+        }
+    }
+
+        public void stopMovement() {
+            fl.setPower(0);
+            fr.setPower(0);
+            bl.setPower(0);
+            br.setPower(0);
+        }
+    }

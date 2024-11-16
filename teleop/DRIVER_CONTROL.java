@@ -1,11 +1,14 @@
 package org.firstinspires.ftc.teamcode.teleop;
 
+import static java.lang.Thread.sleep;
+
 import com.acmerobotics.roadrunner.geometry.Pose2d;
+import com.qualcomm.hardware.dfrobot.HuskyLens;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
+import org.firstinspires.ftc.teamcode.autonomous.HuskyLenses;
 import org.firstinspires.ftc.teamcode.autonomous.Motors;
 import org.firstinspires.ftc.teamcode.autonomous.Servos;
 import org.firstinspires.ftc.teamcode.autonomous.Slides;
@@ -18,6 +21,7 @@ public class DRIVER_CONTROL extends LinearOpMode /*implements Runnable*/ {
     public Servos claw;
     public Servos orientation;
     public Servos panningServo;
+    public HuskyLenses aprilLens;
 
     public DcMotor fl;
     public DcMotor bl;
@@ -26,7 +30,9 @@ public class DRIVER_CONTROL extends LinearOpMode /*implements Runnable*/ {
 
     boolean dpadRightPressed;
     boolean dpadLeftPressed;
-    boolean depositDone = false;
+
+    HuskyLens.Block tag;
+    int xInitial;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -38,23 +44,37 @@ public class DRIVER_CONTROL extends LinearOpMode /*implements Runnable*/ {
         claw = new Servos(hardwareMap, "claw");
         orientation = new Servos(hardwareMap, "orientation");
         panningServo = new Servos(hardwareMap, "panning");
+        aprilLens = new HuskyLenses(hardwareMap, "aprillens", "tag");
+        fl = hardwareMap.get(DcMotor.class, "fl");
+        fr = hardwareMap.get(DcMotor.class, "fr");
+        bl = hardwareMap.get(DcMotor.class, "bl");
+        br = hardwareMap.get(DcMotor.class, "br");
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
         drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         while (opModeIsActive()) {
-
+            double slidespeed = 1.0;
+            double velocity;
+            if (gamepad1.right_trigger > 0.8) {
+                velocity = 1.0;
+            } else if (gamepad1.left_trigger > 0.8) {
+                velocity = 0.3;
+            } else {
+                velocity = 0.75;
+            }
             drive.setWeightedDrivePower(
                     new Pose2d(
-                            -gamepad1.left_stick_y,
-                            -gamepad1.right_stick_x,
-                            -gamepad1.left_stick_x
+                            -gamepad1.left_stick_y * velocity,
+                            -gamepad1.right_stick_x*velocity,
+                            -gamepad1.left_stick_x*velocity
                     )
             );
 
-            if (gamepad2.a) {
+
+            if (gamepad2.y) {
                 panningServo.moveBackwardMIN();
-            } else if (gamepad2.y) {
+            } else if (gamepad2.a) {
                 panningServo.moveForwardMAX();
             }
 
@@ -66,17 +86,18 @@ public class DRIVER_CONTROL extends LinearOpMode /*implements Runnable*/ {
 
             // Slide movement
             if (gamepad1.right_bumper) {
-                slide.runForward(1.0, 0);
+                slide.runForward(slidespeed, 0);
             } else if (gamepad1.left_bumper) {
-                slide.runBackward(1.0, 0);
+                slide.runBackward(slidespeed, 0);
             } else {
                 slide.stopSlide();
             }
 
+
             if (gamepad2.right_trigger > 0.8) {
                 panningMotor.rotateForward(1.0, 0);
             } else if (gamepad2.left_trigger > 0.8) {
-                panningMotor.rotateBackward(1.0, 0);
+                panningMotor.rotateBackward(-1.0, 0);
             } else {
                 panningMotor.stopRotation();
             }
@@ -87,35 +108,70 @@ public class DRIVER_CONTROL extends LinearOpMode /*implements Runnable*/ {
                 claw.moveBackwardMIN();
             }
 
-            if (gamepad1.dpad_right && !dpadRightPressed && !depositDone) {
+
+            if (gamepad2.dpad_right && !dpadRightPressed) {
+                /*aprilLens.updateObservedObjects();
+                tag = aprilLens.getFirstObject();
+                if (tag != null) {
+                    xInitial = 120 - tag.x;
+
+                    strafeRight(500);
+                }*/
                 // Pan up
-                panningMotor.runToTargetPosition(3000, 1.0, "backward");
+                slidespeed = 1.0;
+                panningMotor.rotateForward(0.8, 300);
                 // Move slide up
-                slide.runToTargetPosition(3000, 1.0, "forward");
+                slide.runForward(1.0, 1600);
                 // Move panning up
-                panningServo.moveForwardMAX();
-                Thread.sleep(250);
-                // Deposit block
+                panningServo.moveBackwardMIN();
+
+
+            }
+
+            if (gamepad2.dpad_left && !dpadLeftPressed) {
                 claw.moveBackwardMIN();
-                Thread.sleep(250);
-                // Move panning back
-//                panningServo.moveBackwardMIN();
-                // Move Slide down
-                slide.runToTargetPosition(0, 1.0, "forward");
-//                panningServo.moveForwardMAX();
-                // Pan down back to original position
-                panningMotor.runToTargetPosition(0, 1.0, "forward");
-                Thread.sleep(1000);
-                depositDone = true;
-            } else if (gamepad1.dpad_left && !dpadLeftPressed) {
+                sleep(500);
+                panningServo.moveForwardMAX();
+                sleep(500);
+                slide.runBackward(1.0, 1600);
+                panningMotor.rotateBackward(-1.0, 300);
+                sleep(500);
+                slidespeed = 0.65;
 
             }
 
-            dpadLeftPressed = gamepad1.dpad_left;
-            dpadRightPressed = gamepad1.dpad_right;
-            if (gamepad1.dpad_right) {
-                depositDone = false;
-            }
+            dpadLeftPressed = gamepad2.dpad_left;
+            dpadRightPressed = gamepad2.dpad_right;
+
         }
     }
+
+    /*public void strafeRight(int timeMs) {
+        fl.setPower(1.0); // backward
+        fr.setPower(-1.0); // forward
+        bl.setPower(-1.0); // forward
+        br.setPower(1.0); // backward
+        if (timeMs > 0 ) {
+            sleep(timeMs);
+            stopMovement();
+        }
+    }
+
+    public void moveBackward(int timeMs) {
+        fl.setPower(-1.0);
+        fr.setPower(-1.0);
+        bl.setPower(-1.0);
+        br.setPower(-1.0);
+        if (timeMs > 0 ) {
+            sleep(timeMs);
+            stopMovement();
+        }
+    }
+
+    public void stopMovement() {
+        fl.setPower(0);
+        fr.setPower(0);
+        bl.setPower(0);
+        br.setPower(0);
+    }*/
 }

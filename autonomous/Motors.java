@@ -14,6 +14,8 @@ public class Motors {
     public Motors(HardwareMap hw, String name) {
         motor = hw.get(DcMotor.class, name);
         setModeResetEncoder();
+        Thread t = new Thread(name);
+        t.start();
     }
 
     public void rotateForward(double power, int timeMs) {
@@ -31,7 +33,6 @@ public class Motors {
 
     public void rotateBackward(double power, int timeMs) {
         motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        setDirectionReverse();
         motor.setPower(power);
         if (timeMs > 0 ) {
             try {

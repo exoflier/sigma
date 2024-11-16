@@ -12,9 +12,10 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 public class Slide extends Motor1 implements Runnable {
 
     static final int ZERO = 0;
-    static final int SLIDE_HIGHBUCKET = 2750;
-    static final int PAN_HIGHBUCKET = 3030;
+    static final int SLIDE_HIGHBUCKET = 2500;//2500
+    static final int PAN_HIGHBUCKET = 7;
     static final int PAN_HIGHBAR = 1300;
+    static final int PANIGGING = 200;
 
     public enum level{
 
@@ -22,6 +23,7 @@ public class Slide extends Motor1 implements Runnable {
         slide_highbucket,
         pan_highbucket,
         pan_highbar,
+        panigging,
 
     }
     boolean do_async = false;
@@ -55,7 +57,7 @@ public class Slide extends Motor1 implements Runnable {
     public void terminate () {exit = true;}
     private void move (int l) {
         if (name == "panningmotor"){
-            runbackward(l);
+            runforward(l);
         } else {
             runforward(l);
         }
@@ -83,6 +85,9 @@ public class Slide extends Motor1 implements Runnable {
             //RobotLog.d("MoveToAUTO 2");
         } else if (l == level.zero) {
         move(ZERO);
+            //RobotLog.d("MoveToAUTO 2");
+        } else if (l == level.panigging) {
+            move(PANIGGING);
             //RobotLog.d("MoveToAUTO 2");
         }
         return true;
